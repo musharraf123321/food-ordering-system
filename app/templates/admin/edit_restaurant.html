@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf with context %}
+{% block title %}Edit Restaurant{% endblock %}
+{% block content %}
+<div class="page-head"><div><a href="{{ url_for('admin.restaurants') }}" class="small"><i class="fa-solid fa-arrow-left me-1"></i>Back</a><h1 class="mt-1">Edit restaurant</h1></div></div>
+<div class="card"><div class="card-body"><form method="post" enctype="multipart/form-data">{{ csrf() }}<div class="row g-3">
+  <div class="col-md-4"><label class="form-label">Name *</label><input name="name" class="form-control" value="{{ restaurant.name }}" required></div>
+  <div class="col-md-4"><label class="form-label">Location</label><input name="location" class="form-control" value="{{ restaurant.location or '' }}"></div>
+  <div class="col-md-4"><label class="form-label">Cuisine</label><input name="cuisine_type" class="form-control" value="{{ restaurant.cuisine_type or '' }}"></div>
+  <div class="col-md-6"><label class="form-label">Description</label><input name="description" class="form-control" value="{{ restaurant.description or '' }}"></div>
+  <div class="col-md-3"><label class="form-label">Owner</label><select name="owner_id" class="form-select"><option value="">— unassigned —</option>
+    {% for o in owners %}<option value="{{ o.id }}" {{ 'selected' if o.id==restaurant.owner_id }}>{{ o.name }}</option>{% endfor %}</select></div>
+  <div class="col-md-3"><label class="form-label">Replace image</label><input type="file" name="image" accept="image/*" class="form-control"></div>
+</div><button class="btn btn-brand mt-3">Save changes</button> <a href="{{ url_for('admin.restaurants') }}" class="btn btn-outline-secondary mt-3">Cancel</a></form></div></div>
+{% endblock %}

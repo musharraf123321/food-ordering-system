@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf, badge, stat, plot, empty with context %}
+{% block title %}Demand Prediction{% endblock %}
+{% block head %}<script src="{{ url_for('plotly_js') }}"></script>{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>Demand prediction</h1><div class="sub">Machine-learning forecast of how many units of each item will be ordered</div></div></div>
+
+<div class="card card-body mb-4 no-print">
+  <form method="post" action="{{ url_for('insights.train_model') }}" class="row g-2 align-items-end">{{ csrf() }}
+    <div class="col-md-5"><label class="form-label small mb-1">Restaurant</label>
+      <select name="restaurant" class="form-select" onchange="location='?restaurant='+this.value">
+        {% if current_user.is_admin %}<option value="">All restaurants</option>{% endif %}
+        {% for r in allowed %}<option value="{{ r.id }}" {{ 'selected' if selected==r.id }}>{{ r.name }}</option>{% endfor %}</select></div>
+    <div class="col-md-4 d-grid"><button class="btn btn-brand"><i class="fa-solid fa-brain me-2"></i>Train model &amp; predict next 7 days</button></div>
+    <div class="col-md-3 small text-muted">Uses past orders (RandomForest regression)</div>
+  </form>
+</div>
+
+{% if last_attempt and last_attempt.status == 'Failed' %}
+<div class="alert alert-warning"><i class="fa-solid fa-triangle-exclamation me-2"></i>{{ last_attempt.message }}</div>
+{% endif %}
+
+{% if run %}
+<div class="row g-3 mb-4">
+  <div class="col-6 col-lg-3">{{ stat('fa-calendar-check','blue',run.run_date|dt('%d %b %Y'),'Last trained') }}</div>
+  <div class="col-6 col-lg-3">{{ stat('fa-database','purple','{:,}'.format(run.n_samples or 0),'Training samples') }}</div>
+  <div class="col-6 col-lg-3">{{ stat('fa-bullseye','green', (run.mae if run.mae is not none else '—'), 'Model error (MAE, units/day)') }}</div>
+  <div class="col-6 col-lg-3">{{ stat('fa-ruler','orange', (run.baseline_mae if run.baseline_mae is not none else '—'), 'Baseline error (7-day avg)') }}</div>
+</div>
+
+{% if restock %}
+<div class="alert alert-danger"><i class="fa-solid fa-boxes-stacked me-2"></i><strong>{{ restock|length }} item(s) need restocking</strong> to cover the next 7 days:
+  {% for r in restock[:6] %}{{ r.name }} (+{{ r.shortfall }}){{ ', ' if not loop.last }}{% endfor %}{% if restock|length > 6 %} …{% endif %}</div>
+{% else %}<div class="alert alert-success"><i class="fa-solid fa-circle-check me-2"></i>Current stock covers the forecast for every item.</div>{% endif %}
+
+<div class="row g-4 mb-4">
+  <div class="col-lg-6"><div class="card"><div class="card-body">{{ plot('tot', totals_fig) }}</div></div></div>
+  <div class="col-lg-6"><div class="card"><div class="card-body">
+    {% if chosen %}<form method="get" class="mb-2 no-print d-flex gap-2"><input type="hidden" name="restaurant" value="{{ selected or '' }}">
+      <select name="item" class="form-select form-select-sm" onchange="this.form.submit()">{% for r in rows %}<option value="{{ r.item_id }}" {{ 'selected' if r.item_id==chosen.item_id }}>{{ r.name }}</option>{% endfor %}</select></form>
+    {{ plot('itm', item_fig) }}{% endif %}</div></div></div>
+</div>
+
+<div class="card"><div class="card-header">Stock plan - next 7 days</div><div class="card-body p-0"><div class="table-responsive"><table class="table table-fos mb-0">
+<thead><tr><th>Item</th><th>Restaurant</th><th>Avg/day</th><th>Predicted 7-day demand</th><th>Recommended stock</th><th>Current stock</th><th>Action</th></tr></thead><tbody>
+{% for r in rows %}<tr><td class="fw-semibold">{{ r.name }}</td><td>{{ r.restaurant }}</td><td>{{ r.avg_daily }}</td><td>{{ r.forecast_total }}</td><td>{{ r.recommended_stock }}</td><td>{{ r.stock }}</td>
+<td>{% if r.status == 'Restock needed' %}<span class="badge bg-danger">Restock +{{ r.shortfall }}</span>{% else %}<span class="badge bg-success">Stock OK</span>{% endif %}</td></tr>{% endfor %}
+</tbody></table></div></div></div>
+<p class="small text-muted mt-2">Recommended stock = predicted demand + 10% safety buffer. Forecast dates start the day after the latest order in the data.</p>
+{% elif not (last_attempt and last_attempt.status == 'Failed') %}
+<div class="card"><div class="card-body">{{ empty('fa-brain','No forecast yet','Click "Train model" to learn from past orders and predict future demand.') }}</div></div>
+{% endif %}
+{% endblock %}

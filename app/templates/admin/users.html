@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf, empty, pager with context %}
+{% block title %}Users{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>Users</h1><div class="sub">Manage accounts and roles</div></div></div>
+<form method="get" class="card card-body mb-4"><div class="row g-2">
+  <div class="col-md-6"><input name="search" value="{{ search }}" class="form-control" placeholder="Search name or email"></div>
+  <div class="col-md-4"><select name="role" class="form-select"><option value="">All roles</option>
+    {% for r in ['customer','owner','admin'] %}<option value="{{ r }}" {{ 'selected' if r==role }}>{{ r|capitalize }}</option>{% endfor %}</select></div>
+  <div class="col-md-2 d-grid"><button class="btn btn-brand">Filter</button></div></div></form>
+<div class="card"><div class="card-body p-0">
+{% if users %}<div class="table-responsive"><table class="table table-fos mb-0">
+<thead><tr><th>ID</th><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th>Joined</th><th class="text-end">Actions</th></tr></thead><tbody>
+{% for u in users %}<tr><td>{{ u.id }}</td><td class="fw-semibold">{{ u.name }}</td><td>{{ u.email }}</td>
+<td>{% if u.id==current_user.id %}<span class="badge bg-dark">{{ u.role }} (you)</span>{% else %}
+<form method="post" action="{{ url_for('admin.change_role', user_id=u.id) }}" class="d-flex gap-1">{{ csrf() }}
+<select name="role" class="form-select form-select-sm" style="width:120px" onchange="this.form.submit()">
+{% for r in ['customer','owner','admin'] %}<option value="{{ r }}" {{ 'selected' if r==u.role }}>{{ r|capitalize }}</option>{% endfor %}</select></form>{% endif %}</td>
+<td><span class="badge bg-{{ 'success' if u.active else 'secondary' }}">{{ 'Active' if u.active else 'Deactivated' }}</span></td>
+<td>{{ u.created_at|dt('%d %b %Y') }}</td>
+<td class="text-end text-nowrap">{% if u.id!=current_user.id %}
+<form method="post" action="{{ url_for('admin.toggle_user', user_id=u.id) }}" class="d-inline">{{ csrf() }}<button class="btn btn-sm btn-outline-secondary">{{ 'Deactivate' if u.active else 'Activate' }}</button></form>
+<form method="post" action="{{ url_for('admin.delete_user', user_id=u.id) }}" class="d-inline" data-confirm="Delete {{ u.name }}?">{{ csrf() }}<button class="btn btn-sm btn-outline-danger"><i class="fa-solid fa-trash"></i></button></form>{% endif %}</td></tr>{% endfor %}
+</tbody></table></div>{% else %}{{ empty('fa-users','No users found') }}{% endif %}</div></div>
+{{ pager(pagination, 'admin.users') }}
+{% endblock %}

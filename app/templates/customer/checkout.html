@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf with context %}
+{% block title %}Checkout{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>Checkout</h1><div class="sub">Confirm delivery details and payment</div></div></div>
+<form method="post" novalidate>
+{{ csrf() }}
+<div class="row g-4">
+  <div class="col-lg-7">
+    <div class="card mb-4"><div class="card-header"><i class="fa-solid fa-location-dot me-2 text-brand"></i>Delivery details</div>
+      <div class="card-body">
+        <label class="form-label fw-semibold">Delivery address *</label>
+        <input type="text" name="address" class="form-control mb-3" value="{{ form.get('address','') }}" required>
+        <label class="form-label fw-semibold">Notes for the restaurant (optional)</label>
+        <input type="text" name="notes" class="form-control" maxlength="255" value="{{ form.get('notes','') }}" placeholder="e.g. less spicy, ring the bell">
+      </div></div>
+
+    <div class="card"><div class="card-header"><i class="fa-solid fa-credit-card me-2 text-brand"></i>Payment method</div>
+      <div class="card-body">
+        {% set pm = form.get('payment_method','COD') %}
+        <div class="form-check mb-2"><input class="form-check-input" type="radio" name="payment_method" id="pmCod" value="COD" {{ 'checked' if pm!='Online' }}>
+          <label class="form-check-label fw-semibold" for="pmCod"><i class="fa-solid fa-money-bill-wave me-1 text-success"></i>Cash on delivery</label></div>
+        <div class="form-check mb-3"><input class="form-check-input" type="radio" name="payment_method" id="pmOnline" value="Online" {{ 'checked' if pm=='Online' }}>
+          <label class="form-check-label fw-semibold" for="pmOnline"><i class="fa-solid fa-credit-card me-1 text-primary"></i>Pay online (card)</label></div>
+        <div id="cardBox" class="border rounded p-3 bg-light" style="display:none">
+          <div class="row g-2">
+            <div class="col-12"><input type="text" name="card_number" class="form-control" placeholder="Card number" value="{{ form.get('card_number','') }}" inputmode="numeric"></div>
+            <div class="col-6"><input type="text" name="expiry" class="form-control" placeholder="MM/YY" value="{{ form.get('expiry','') }}"></div>
+            <div class="col-6"><input type="password" name="cvv" class="form-control" placeholder="CVV"></div>
+          </div>
+          <div class="small text-muted mt-2"><i class="fa-solid fa-circle-info"></i> Demo gateway - use <code>4242 4242 4242 4242</code> to succeed
+            or <code>4000 0000 0000 0002</code> to simulate a declined card.</div>
+        </div>
+      </div></div>
+  </div>
+
+  <div class="col-lg-5">
+    <div class="card sticky-summary"><div class="card-body">
+      <h5 class="fw-bold">Your order</h5>
+      {% for line in cart.items %}
+        <div class="d-flex justify-content-between small mb-1"><span>{{ line.quantity }} × {{ line.menu_item.name }}</span><span>{{ line.subtotal|money }}</span></div>
+      {% endfor %}
+      <hr><div class="d-flex justify-content-between fs-5 fw-bold"><span>Total</span><span class="text-brand">{{ cart.total_amount|money }}</span></div>
+      <button class="btn btn-brand btn-lg w-100 mt-3"><i class="fa-solid fa-check me-2"></i>Place order</button>
+      <a href="{{ url_for('customer.view_cart') }}" class="btn btn-link w-100">Back to cart</a>
+    </div></div>
+  </div>
+</div>
+</form>
+{% endblock %}
+{% block scripts %}
+<script>
+function syncCard(){ document.getElementById("cardBox").style.display = document.getElementById("pmOnline").checked ? "block" : "none"; }
+document.querySelectorAll("input[name=payment_method]").forEach(function(r){ r.addEventListener("change", syncCard); });
+syncCard();
+</script>
+{% endblock %}

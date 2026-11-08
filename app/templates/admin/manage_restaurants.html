@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf, empty with context %}
+{% block title %}Manage Restaurants{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>Restaurants</h1><div class="sub">Create restaurants and assign owners</div></div></div>
+<div class="card mb-4"><div class="card-header"><i class="fa-solid fa-plus me-2 text-brand"></i>Add restaurant</div><div class="card-body">
+<form method="post" enctype="multipart/form-data">{{ csrf() }}<div class="row g-3">
+  <div class="col-md-4"><label class="form-label">Name *</label><input name="name" class="form-control" required></div>
+  <div class="col-md-4"><label class="form-label">Location</label><input name="location" class="form-control" placeholder="e.g. Islamabad"></div>
+  <div class="col-md-4"><label class="form-label">Cuisine</label><input name="cuisine_type" class="form-control" placeholder="e.g. Italian"></div>
+  <div class="col-md-6"><label class="form-label">Description</label><input name="description" class="form-control"></div>
+  <div class="col-md-3"><label class="form-label">Owner</label><select name="owner_id" class="form-select"><option value="">— unassigned —</option>
+    {% for o in owners %}<option value="{{ o.id }}">{{ o.name }} ({{ o.email }})</option>{% endfor %}</select></div>
+  <div class="col-md-3"><label class="form-label">Image</label><input type="file" name="image" accept="image/*" class="form-control"></div>
+</div><button class="btn btn-brand mt-3"><i class="fa-solid fa-plus me-2"></i>Add restaurant</button></form></div></div>
+<div class="card"><div class="card-body p-0">
+{% if restaurants %}<div class="table-responsive"><table class="table table-fos mb-0">
+<thead><tr><th>Name</th><th>Location</th><th>Cuisine</th><th>Owner</th><th>Menu items</th><th>Orders</th><th class="text-end">Actions</th></tr></thead><tbody>
+{% for r in restaurants %}<tr><td class="fw-semibold">{{ r.name }}</td><td>{{ r.location or '—' }}</td><td>{{ r.cuisine_type or '—' }}</td>
+<td>{{ r.owner.name if r.owner else '—' }}</td><td>{{ r.visible_items|length }}</td><td>{{ order_counts.get(r.id,0) }}</td>
+<td class="text-end text-nowrap"><a href="{{ url_for('admin.edit_restaurant', restaurant_id=r.id) }}" class="btn btn-sm btn-outline-primary"><i class="fa-solid fa-pen"></i></a>
+<form method="post" action="{{ url_for('admin.delete_restaurant', restaurant_id=r.id) }}" class="d-inline" data-confirm="Delete restaurant '{{ r.name }}'?">{{ csrf() }}
+<button class="btn btn-sm btn-outline-danger"><i class="fa-solid fa-trash"></i></button></form></td></tr>{% endfor %}</tbody></table></div>
+{% else %}{{ empty('fa-shop','No restaurants yet') }}{% endif %}</div></div>
+{% endblock %}

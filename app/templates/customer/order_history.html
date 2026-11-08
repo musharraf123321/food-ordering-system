@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% from "_macros.html" import badge, empty with context %}
+{% block title %}Order History{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>Order history</h1><div class="sub">All the orders you have placed</div></div></div>
+
+<form method="get" class="card card-body mb-4">
+  <div class="row g-2 align-items-end">
+    <div class="col-md-3"><label class="form-label small mb-1">Status</label><select name="status" class="form-select"><option value="">All</option>
+      {% for s in ORDER_STATUSES %}<option value="{{ s }}" {{ 'selected' if s==status }}>{{ s }}</option>{% endfor %}</select></div>
+    <div class="col-md-3"><label class="form-label small mb-1">From date</label><input type="date" name="start" value="{{ start }}" class="form-control"></div>
+    <div class="col-md-3"><label class="form-label small mb-1">To date</label><input type="date" name="end" value="{{ end }}" class="form-control"></div>
+    <div class="col-md-3 d-grid"><button class="btn btn-brand"><i class="fa-solid fa-filter me-1"></i>Filter</button></div>
+  </div>
+</form>
+
+<div class="card">
+  {% if orders %}
+  <div class="table-responsive"><table class="table table-fos table-hover mb-0">
+    <thead><tr><th>Order</th><th>Date</th><th>Restaurant</th><th>Items</th><th>Total</th><th>Payment</th><th>Status</th><th></th></tr></thead>
+    <tbody>{% for o in orders %}
+      <tr><td class="fw-bold">#{{ o.id }}</td><td>{{ o.order_date|dt }}</td><td>{{ o.restaurant.name }}</td><td>{{ o.item_count }}</td>
+        <td>{{ o.total_amount|money }}</td><td>{{ o.payment_method }} {{ badge(o.payment_status) }}</td><td>{{ badge(o.status) }}</td>
+        <td><a href="{{ url_for('customer.order_detail', order_id=o.id) }}" class="btn btn-sm btn-outline-brand">Track</a></td></tr>
+    {% endfor %}</tbody></table></div>
+  {% elif has_any %}
+    {{ empty('fa-filter-circle-xmark', 'No orders match your filters', 'Try a different status or date range.') }}
+  {% else %}
+    {{ empty('fa-receipt', 'No history available', 'You have not placed any orders yet.') }}
+    <div class="text-center pb-4"><a href="{{ url_for('customer.restaurants') }}" class="btn btn-brand">Order now</a></div>
+  {% endif %}
+</div>
+{% endblock %}

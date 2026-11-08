@@ -1,0 +1,72 @@
+{# ---------- reusable template pieces ---------- #}
+{% macro csrf() %}<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">{% endmacro %}
+
+{% macro badge(text) %}<span class="badge bg-{{ text|badge }}">{{ text }}</span>{% endmacro %}
+
+{% macro thumb(item, size=84) %}
+  {% set url = image_url(item.image) %}
+  {% if url %}<img src="{{ url }}" class="item-thumb" style="width:{{ size }}px;height:{{ size }}px" alt="{{ item.name }}">
+  {% else %}<div class="item-thumb fallback" style="width:{{ size }}px;height:{{ size }}px">{{ item.category_name|emoji }}</div>{% endif %}
+{% endmacro %}
+
+{% macro stat(icon, color, value, label) %}
+<div class="card stat-card h-100"><div class="card-body d-flex align-items-center gap-3">
+  <div class="stat-icon bg-grad-{{ color }}"><i class="fa-solid {{ icon }}"></i></div>
+  <div><div class="stat-value">{{ value }}</div><div class="stat-label">{{ label }}</div></div>
+</div></div>
+{% endmacro %}
+
+{% macro empty(icon, text, sub='') %}
+<div class="empty-state"><i class="fa-solid {{ icon }}"></i><h5>{{ text }}</h5>{% if sub %}<p>{{ sub }}</p>{% endif %}</div>
+{% endmacro %}
+
+{% macro pager(p, endpoint) %}
+{% if p.pages > 1 %}
+<nav class="mt-3"><ul class="pagination justify-content-center mb-0">
+  {% if p.has_prev %}<li class="page-item"><a class="page-link" href="{{ url_for(endpoint, **dict(request.args.to_dict(), page=p.prev_num)) }}">&laquo;</a></li>{% endif %}
+  {% for n in p.iter_pages() %}
+    {% if n %}<li class="page-item {{ 'active' if n==p.page }}"><a class="page-link" href="{{ url_for(endpoint, **dict(request.args.to_dict(), page=n)) }}">{{ n }}</a></li>
+    {% else %}<li class="page-item disabled"><span class="page-link">…</span></li>{% endif %}
+  {% endfor %}
+  {% if p.has_next %}<li class="page-item"><a class="page-link" href="{{ url_for(endpoint, **dict(request.args.to_dict(), page=p.next_num)) }}">&raquo;</a></li>{% endif %}
+</ul></nav>
+{% endif %}
+{% endmacro %}
+
+{# status dropdown used by owners and admins #}
+{% macro status_form(order, endpoint) %}
+{% if order.status in ('Delivered','Cancelled') %}
+  <span class="text-muted small">Closed</span>
+{% else %}
+<form method="post" action="{{ url_for(endpoint, order_id=order.id) }}" class="d-flex gap-1">
+  {{ csrf() }}<input type="hidden" name="next" value="{{ request.full_path.rstrip('?') }}">
+  <select name="status" class="form-select form-select-sm" style="min-width:140px">
+    {% for s in ORDER_STATUSES %}<option value="{{ s }}" {{ 'selected' if s==order.status }}>{{ s }}</option>{% endfor %}
+  </select>
+  <button class="btn btn-sm btn-brand" title="Update"><i class="fa-solid fa-check"></i></button>
+</form>
+{% endif %}
+{% endmacro %}
+
+{# Plotly chart: needs plotly.min.js loaded in the page head #}
+{% macro plot(div_id, fig_json) %}
+<div id="{{ div_id }}" class="plot"></div>
+<script>(function(){var f={{ fig_json|safe }};Plotly.newPlot("{{ div_id }}",f.data,f.layout,{responsive:true,displaylogo:false});})();</script>
+{% endmacro %}
+
+{# scope + date filter bar for insights pages #}
+{% macro scope_bar(allowed, selected, start, end, extra='') %}
+<form method="get" class="card card-body mb-4 no-print">
+  <div class="row g-2 align-items-end">
+    {{ extra|safe }}
+    <div class="col-md-3"><label class="form-label small mb-1">Restaurant</label>
+      <select name="restaurant" class="form-select">
+        {% if current_user.is_admin %}<option value="">All restaurants</option>{% endif %}
+        {% for r in allowed %}<option value="{{ r.id }}" {{ 'selected' if selected==r.id }}>{{ r.name }}</option>{% endfor %}
+      </select></div>
+    <div class="col-md-3"><label class="form-label small mb-1">From</label><input type="date" name="start" value="{{ start }}" class="form-control"></div>
+    <div class="col-md-3"><label class="form-label small mb-1">To</label><input type="date" name="end" value="{{ end }}" class="form-control"></div>
+    <div class="col-md-3 d-grid"><button class="btn btn-brand"><i class="fa-solid fa-filter me-1"></i>Apply</button></div>
+  </div>
+</form>
+{% endmacro %}

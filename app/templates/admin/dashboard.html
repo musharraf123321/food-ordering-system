@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% from "_macros.html" import badge, stat, empty with context %}
+{% block title %}Admin Dashboard{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>Admin dashboard</h1><div class="sub">System overview</div></div>
+  <div class="d-flex gap-2"><a class="btn btn-brand" href="{{ url_for('admin.restaurants') }}"><i class="fa-solid fa-shop me-1"></i>Restaurants</a>
+  <a class="btn btn-outline-brand" href="{{ url_for('admin.backup') }}"><i class="fa-solid fa-database me-1"></i>Backup</a></div></div>
+<div class="row g-3 mb-4">
+  <div class="col-6 col-lg-3">{{ stat('fa-shop','orange',stats.restaurants,'Restaurants') }}</div>
+  <div class="col-6 col-lg-3">{{ stat('fa-bowl-food','purple',stats.menu_items,'Menu items') }}</div>
+  <div class="col-6 col-lg-3">{{ stat('fa-users','blue',stats.customers,'Customers') }}</div>
+  <div class="col-6 col-lg-3">{{ stat('fa-store','teal',stats.owners,'Restaurant owners') }}</div>
+  <div class="col-6 col-lg-3">{{ stat('fa-receipt','pink',stats.orders,'Total orders') }}</div>
+  <div class="col-6 col-lg-3">{{ stat('fa-bag-shopping','orange',stats.today_orders,"Today's orders") }}</div>
+  <div class="col-6 col-lg-3">{{ stat('fa-coins','green',stats.revenue|money,'Revenue (excl. cancelled)') }}</div>
+  <div class="col-6 col-lg-3">{{ stat('fa-truck-fast','blue',stats.active,'Orders in progress') }}</div>
+</div>
+<div class="row g-4">
+  <div class="col-lg-8"><div class="card"><div class="card-header d-flex justify-content-between"><span>Recent orders</span><a class="small" href="{{ url_for('admin.orders') }}">View all</a></div>
+    <div class="card-body p-0">{% if recent %}<table class="table table-fos mb-0"><thead><tr><th>Order</th><th>Restaurant</th><th>Customer</th><th>Total</th><th>Status</th></tr></thead><tbody>
+      {% for o in recent %}<tr><td>#{{ o.id }}</td><td>{{ o.restaurant.name }}</td><td>{{ o.user.name }}</td><td>{{ o.total_amount|money }}</td><td>{{ badge(o.status) }}</td></tr>{% endfor %}</tbody></table>
+      {% else %}{{ empty('fa-receipt','No orders yet') }}{% endif %}</div></div></div>
+  <div class="col-lg-4"><div class="card mb-3"><div class="card-header">Last backup</div><div class="card-body">
+    {% if last_backup %}<div class="fw-semibold">{{ last_backup.name }}</div><div class="text-muted small">{{ last_backup.created|dt }} · {{ last_backup.size_kb }} KB</div>
+    {% else %}<span class="text-muted">No backup yet.</span>{% endif %}</div></div>
+    <div class="card"><div class="card-header">Quick links</div><div class="list-group list-group-flush">
+      <a class="list-group-item" href="{{ url_for('insights.analytics_view') }}">📊 Analytics</a>
+      <a class="list-group-item" href="{{ url_for('insights.predictions') }}">🧠 Demand prediction</a>
+      <a class="list-group-item" href="{{ url_for('insights.export_page') }}">📁 Export data</a>
+      <a class="list-group-item" href="{{ url_for('admin.users') }}">👥 Manage users</a></div></div></div>
+</div>
+{% endblock %}

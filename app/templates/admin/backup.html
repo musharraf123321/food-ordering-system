@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf, empty with context %}
+{% block title %}Backup & Restore{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>Backup &amp; restore</h1><div class="sub">Automatic backup runs every {{ interval }} hours while the app is running</div></div>
+  <form method="post" action="{{ url_for('admin.create_backup') }}">{{ csrf() }}<button class="btn btn-brand"><i class="fa-solid fa-floppy-disk me-2"></i>Create backup now</button></form></div>
+<div class="row g-4">
+  <div class="col-lg-8"><div class="card"><div class="card-header">Available backups</div><div class="card-body p-0">
+  {% if backups %}<div class="table-responsive"><table class="table table-fos mb-0"><thead><tr><th>File</th><th>Type</th><th>Created</th><th>Size</th><th class="text-end">Actions</th></tr></thead><tbody>
+  {% for b in backups %}<tr><td class="small fw-semibold">{{ b.name }}</td><td><span class="badge bg-light text-dark border">{{ b.kind }}</span></td><td>{{ b.created|dt }}</td><td>{{ b.size_kb }} KB</td>
+    <td class="text-end text-nowrap">
+    <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('admin.download_backup', filename=b.name) }}" title="Download"><i class="fa-solid fa-download"></i></a>
+    <form method="post" action="{{ url_for('admin.restore_backup') }}" class="d-inline" data-confirm="Restore this backup? Current data will be replaced (a safety copy is made first).">{{ csrf() }}
+      <input type="hidden" name="filename" value="{{ b.name }}"><button class="btn btn-sm btn-outline-warning" title="Restore"><i class="fa-solid fa-clock-rotate-left"></i> Restore</button></form>
+    <form method="post" action="{{ url_for('admin.delete_backup') }}" class="d-inline" data-confirm="Delete this backup file?">{{ csrf() }}
+      <input type="hidden" name="filename" value="{{ b.name }}"><button class="btn btn-sm btn-outline-danger"><i class="fa-solid fa-trash"></i></button></form></td></tr>{% endfor %}
+  </tbody></table></div>{% else %}{{ empty('fa-database','No backups yet','Click "Create backup now".') }}{% endif %}</div></div></div>
+  <div class="col-lg-4">
+    <div class="card mb-4"><div class="card-header">Restore from a file</div><div class="card-body">
+      <form method="post" action="{{ url_for('admin.restore_backup') }}" enctype="multipart/form-data" data-confirm="Restore from the uploaded file? Current data will be replaced.">{{ csrf() }}
+        <input type="file" name="backup_file" accept=".db" class="form-control mb-2" required>
+        <button class="btn btn-outline-warning w-100"><i class="fa-solid fa-upload me-1"></i>Upload &amp; restore</button></form>
+      <div class="small text-muted mt-2">The file is checked for corruption before anything is changed.</div></div></div>
+    <div class="card"><div class="card-header">Recent activity</div><ul class="list-group list-group-flush small">
+      {% for l in logs %}<li class="list-group-item"><span class="badge bg-{{ 'success' if l.status=='Success' else 'danger' }}">{{ l.action }}</span> {{ l.file_name }}<br><span class="text-muted">{{ l.backup_date|dt }}</span></li>
+      {% else %}<li class="list-group-item text-muted">No activity yet.</li>{% endfor %}</ul></div>
+  </div>
+</div>
+{% endblock %}

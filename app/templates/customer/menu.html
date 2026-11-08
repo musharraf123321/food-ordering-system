@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf, thumb, badge with context %}
+{% block title %}{{ restaurant.name }}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div><a href="{{ url_for('customer.restaurants') }}" class="small"><i class="fa-solid fa-arrow-left me-1"></i>All restaurants</a>
+    <h1 class="mt-1">{{ restaurant.name }}</h1>
+    <div class="sub">{% if restaurant.cuisine_type %}{{ restaurant.cuisine_type }} · {% endif %}{{ restaurant.location or '' }}
+      {% if restaurant.description %} — {{ restaurant.description }}{% endif %}</div></div>
+  {% if current_user.is_customer %}<a href="{{ url_for('customer.view_cart') }}" class="btn btn-brand"><i class="fa-solid fa-cart-shopping me-2"></i>View cart</a>{% endif %}
+</div>
+
+<form method="get" class="card card-body mb-4">
+  <div class="row g-2">
+    <div class="col-md-6"><input type="text" name="search" value="{{ keyword }}" class="form-control" placeholder="Search this menu..."></div>
+    <div class="col-md-4"><select name="category" class="form-select"><option value="">All categories</option>
+      {% for c in categories %}<option value="{{ c.id }}" {{ 'selected' if c.id==category_id }}>{{ c.name }}</option>{% endfor %}</select></div>
+    <div class="col-md-2 d-grid"><button class="btn btn-brand">Filter</button></div>
+  </div>
+</form>
+
+{% if items %}
+<div class="row g-3">
+{% for item in items %}
+  <div class="col-lg-6">
+    <div class="card item-card {{ 'unavailable' if not item.in_stock }}">
+      <div class="card-body d-flex gap-3">
+        {{ thumb(item) }}
+        <div class="flex-grow-1">
+          <div class="d-flex justify-content-between align-items-start">
+            <h6 class="fw-bold mb-0">{{ item.name }}</h6>
+            {% if current_user.is_customer %}
+            <form method="post" action="{{ url_for('customer.toggle_favorite', item_id=item.id) }}">{{ csrf() }}
+              <input type="hidden" name="next" value="{{ request.full_path.rstrip('?') }}">
+              <button class="fav-btn {{ 'active' if item.id in fav_ids }}" title="Favorite"><i class="fa-{{ 'solid' if item.id in fav_ids else 'regular' }} fa-heart"></i></button></form>
+            {% endif %}
+          </div>
+          <div class="small text-muted mb-1">{{ item.category_name }} · {{ badge(item.stock_status) }}</div>
+          {% if item.description %}<div class="small text-muted mb-2">{{ item.description }}</div>{% endif %}
+          <div class="d-flex justify-content-between align-items-center">
+            <span class="fw-bold text-brand fs-5">{{ item.price|money }}</span>
+            {% if current_user.is_customer %}
+              {% if item.in_stock %}
+              <form method="post" action="{{ url_for('customer.add_to_cart', item_id=item.id) }}" class="d-flex gap-2">{{ csrf() }}
+                <input type="hidden" name="next" value="{{ request.full_path.rstrip('?') }}">
+                <input type="number" name="quantity" value="1" min="1" max="{{ item.stock_qty }}" class="form-control form-control-sm qty-input">
+                <button class="btn btn-sm btn-brand"><i class="fa-solid fa-cart-plus me-1"></i>Add</button></form>
+              {% else %}<button class="btn btn-sm btn-secondary" disabled>Out of stock</button>{% endif %}
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endfor %}
+</div>
+{% else %}
+<div class="card"><div class="card-body empty-state"><i class="fa-solid fa-bowl-food"></i><h5>No menu items found</h5><p>This restaurant has no items matching your search.</p></div></div>
+{% endif %}
+{% endblock %}

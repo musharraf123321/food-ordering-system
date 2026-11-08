@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% from "_macros.html" import badge, empty, pager, status_form with context %}
+{% block title %}All Orders{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>All orders</h1><div class="sub">Monitor and update orders across every restaurant</div></div></div>
+<form method="get" class="card card-body mb-4"><div class="row g-2 align-items-end">
+  <div class="col-md-3"><label class="form-label small mb-1">Restaurant</label><select name="restaurant" class="form-select"><option value="">All</option>
+    {% for r in restaurants %}<option value="{{ r.id }}" {{ 'selected' if r.id==restaurant_id }}>{{ r.name }}</option>{% endfor %}</select></div>
+  <div class="col-md-2"><label class="form-label small mb-1">Status</label><select name="status" class="form-select"><option value="">All</option>
+    {% for s in ORDER_STATUSES %}<option value="{{ s }}" {{ 'selected' if s==status }}>{{ s }}</option>{% endfor %}</select></div>
+  <div class="col-md-2"><label class="form-label small mb-1">From</label><input type="date" name="start" value="{{ start }}" class="form-control"></div>
+  <div class="col-md-2"><label class="form-label small mb-1">To</label><input type="date" name="end" value="{{ end }}" class="form-control"></div>
+  <div class="col-md-3 d-grid"><button class="btn btn-brand">Filter</button></div></div></form>
+<div class="card">{% if orders %}<div class="table-responsive"><table class="table table-fos mb-0">
+<thead><tr><th>Order</th><th>Date</th><th>Restaurant</th><th>Customer</th><th>Total</th><th>Payment</th><th>Status</th><th>Update</th></tr></thead><tbody>
+{% for o in orders %}<tr><td class="fw-bold">#{{ o.id }}</td><td>{{ o.order_date|dt('%d %b, %I:%M %p') }}</td><td>{{ o.restaurant.name }}</td><td>{{ o.user.name }}</td>
+<td>{{ o.total_amount|money }}</td><td>{{ o.payment_method }} {{ badge(o.payment_status) }}</td><td>{{ badge(o.status) }}</td><td>{{ status_form(o, 'admin.update_order_status') }}</td></tr>{% endfor %}
+</tbody></table></div>{% else %}{{ empty('fa-receipt','No orders found','Try different filters.') }}{% endif %}</div>
+{{ pager(pagination, 'admin.orders') }}
+{% endblock %}

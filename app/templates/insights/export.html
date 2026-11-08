@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% from "_macros.html" import empty with context %}
+{% block title %}Export Data{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>Export order data</h1><div class="sub">Download orders as CSV or Excel</div></div></div>
+<div class="row g-4"><div class="col-lg-6"><div class="card"><div class="card-header">Export options</div><div class="card-body">
+<form method="get" action="{{ url_for('insights.export_download') }}"><div class="row g-3">
+  <div class="col-12"><label class="form-label">Restaurant</label><select name="restaurant" class="form-select">
+    {% if current_user.is_admin %}<option value="">All restaurants</option>{% endif %}
+    {% for r in allowed %}<option value="{{ r.id }}">{{ r.name }}</option>{% endfor %}</select></div>
+  <div class="col-md-6"><label class="form-label">From</label><input type="date" name="start" value="{{ start }}" class="form-control"></div>
+  <div class="col-md-6"><label class="form-label">To</label><input type="date" name="end" value="{{ end }}" class="form-control"></div>
+  <div class="col-12"><label class="form-label">Format</label><select name="format" class="form-select"><option value="csv">CSV (.csv)</option><option value="xlsx">Excel (.xlsx)</option></select></div>
+</div><button class="btn btn-brand mt-3"><i class="fa-solid fa-download me-2"></i>Export</button></form></div></div></div>
+<div class="col-lg-6"><div class="card"><div class="card-header">Recent exports</div><div class="card-body p-0">
+{% if logs %}<table class="table table-fos mb-0"><thead><tr><th>When</th><th>File</th><th>Rows</th></tr></thead><tbody>
+{% for l in logs %}<tr><td>{{ l.export_date|dt('%d %b, %H:%M') }}</td><td class="small">{{ l.file_name }}{% if current_user.is_admin and l.user %} <span class="text-muted">· {{ l.user.name }}</span>{% endif %}</td><td>{{ l.record_count }}</td></tr>{% endfor %}</tbody></table>
+{% else %}{{ empty('fa-file-export','No exports yet') }}{% endif %}</div></div></div></div>
+{% endblock %}

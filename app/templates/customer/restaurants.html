@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}Restaurants{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>Restaurants</h1><div class="sub">Pick a restaurant to see its menu</div></div></div>
+
+<form method="get" class="card card-body mb-4">
+  <div class="row g-2">
+    <div class="col-md-4"><input type="text" name="search" value="{{ keyword }}" class="form-control" placeholder="Search by name or cuisine..."></div>
+    <div class="col-md-3"><select name="location" class="form-select"><option value="">All locations</option>
+      {% for l in locations %}<option value="{{ l }}" {{ 'selected' if l==location }}>{{ l }}</option>{% endfor %}</select></div>
+    <div class="col-md-3"><select name="cuisine" class="form-select"><option value="">All cuisines</option>
+      {% for c in cuisines %}<option value="{{ c }}" {{ 'selected' if c==cuisine }}>{{ c }}</option>{% endfor %}</select></div>
+    <div class="col-md-2 d-grid"><button class="btn btn-brand"><i class="fa-solid fa-magnifying-glass me-1"></i>Filter</button></div>
+  </div>
+</form>
+
+{% if restaurants %}
+<div class="row g-4">
+  {% for r in restaurants %}
+  <div class="col-md-6 col-lg-4">
+    <a href="{{ url_for('customer.menu', restaurant_id=r.id) }}" class="text-decoration-none text-reset">
+      <div class="card rest-card h-100">
+        {% set url = image_url(r.image) %}
+        {% if url %}<img src="{{ url }}" alt="{{ r.name }}">{% else %}<div class="img-fallback">🍽️</div>{% endif %}
+        <div class="card-body">
+          <h5 class="fw-bold mb-1">{{ r.name }}</h5>
+          <div class="mb-2">{% if r.cuisine_type %}<span class="badge bg-warning text-dark">{{ r.cuisine_type }}</span>{% endif %}
+            {% if r.location %}<span class="text-muted small ms-1"><i class="fa-solid fa-location-dot"></i> {{ r.location }}</span>{% endif %}</div>
+          <p class="text-muted small mb-0">{{ r.description or 'Delicious food, freshly prepared.' }}</p>
+        </div>
+        <div class="card-footer bg-transparent border-0 pb-3"><span class="btn btn-sm btn-outline-brand w-100">View menu <i class="fa-solid fa-arrow-right ms-1"></i></span></div>
+      </div>
+    </a>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="card"><div class="card-body empty-state"><i class="fa-solid fa-store-slash"></i><h5>No restaurants found</h5>
+  <p>Try changing your search or filters.</p><a href="{{ url_for('customer.restaurants') }}" class="btn btn-outline-brand">Clear filters</a></div></div>
+{% endif %}
+{% endblock %}

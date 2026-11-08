@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf, badge, thumb with context %}
+{% block title %}Order #{{ order.id }}{% endblock %}
+{% block content %}
+{% if placed %}
+<div class="alert alert-success shadow-sm"><i class="fa-solid fa-circle-check me-2"></i><strong>Thank you!</strong> Your order #{{ order.id }} has been placed successfully.</div>
+{% endif %}
+<div class="page-head">
+  <div><a href="{{ url_for('customer.order_history') }}" class="small"><i class="fa-solid fa-arrow-left me-1"></i>All orders</a>
+    <h1 class="mt-1">Order #{{ order.id }} <span id="statusBadge">{{ badge(order.status) }}</span></h1>
+    <div class="sub">{{ order.restaurant.name }} · placed {{ order.order_date|dt }}</div></div>
+  <div class="d-flex gap-2 no-print">
+    <button class="btn btn-outline-secondary" onclick="refreshStatus()"><i class="fa-solid fa-rotate me-1"></i>Refresh status</button>
+    <form method="post" action="{{ url_for('customer.reorder', order_id=order.id) }}">{{ csrf() }}<button class="btn btn-outline-brand"><i class="fa-solid fa-repeat me-1"></i>Reorder</button></form>
+    {% if order.can_cancel %}
+    <form method="post" action="{{ url_for('customer.cancel_order', order_id=order.id) }}" data-confirm="Cancel this order?">{{ csrf() }}<button class="btn btn-outline-danger"><i class="fa-solid fa-ban me-1"></i>Cancel</button></form>
+    {% endif %}
+  </div>
+</div>
+
+{% set steps = ['Pending','Confirmed','Preparing','Out for Delivery','Delivered'] %}
+{% set icons = ['fa-hourglass-half','fa-thumbs-up','fa-fire-burner','fa-motorcycle','fa-house-circle-check'] %}
+<div class="card mb-4"><div class="card-body">
+  {% if order.status == 'Cancelled' %}
+    <div class="text-center text-danger py-2"><i class="fa-solid fa-circle-xmark fa-2x"></i><div class="fw-bold mt-2">This order was cancelled</div></div>
+  {% else %}
+  {% set idx = steps.index(order.status) %}
+  <div class="timeline" id="timeline">
+    {% for s in steps %}
+    <div class="tl-step {{ 'done' if loop.index0 < idx or order.status=='Delivered' }} {{ 'current' if loop.index0==idx and order.status!='Delivered' }}">
+      <div class="tl-dot"><i class="fa-solid {{ icons[loop.index0] }}"></i></div>{{ s }}</div>
+    {% endfor %}
+  </div>
+  {% endif %}
+</div></div>
+
+<div class="row g-4">
+  <div class="col-lg-8"><div class="card"><div class="card-header">Items</div><div class="card-body p-0">
+    <table class="table table-fos mb-0"><thead><tr><th>Item</th><th class="text-center">Qty</th><th class="text-end">Price</th><th class="text-end">Subtotal</th></tr></thead>
+    <tbody>{% for l in order.items %}<tr><td>{{ l.menu_item.name }}</td><td class="text-center">{{ l.quantity }}</td>
+      <td class="text-end">{{ l.unit_price|money }}</td><td class="text-end">{{ l.subtotal|money }}</td></tr>{% endfor %}</tbody>
+    <tfoot><tr><th colspan="3" class="text-end">Total</th><th class="text-end text-brand">{{ order.total_amount|money }}</th></tr></tfoot></table>
+  </div></div></div>
+  <div class="col-lg-4"><div class="card"><div class="card-body">
+    <h6 class="fw-bold">Delivery</h6><p class="mb-3">{{ order.delivery_address or '—' }}</p>
+    <h6 class="fw-bold">Payment</h6><p class="mb-3">{{ order.payment_method }} · <span id="payBadge">{{ badge(order.payment_status) }}</span></p>
+    {% if order.notes %}<h6 class="fw-bold">Notes</h6><p class="mb-0">{{ order.notes }}</p>{% endif %}
+  </div></div></div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+// "Refresh status": ask the server for the latest status; reload if it changed.
+function refreshStatus(){
+  fetch("{{ url_for('customer.order_status_json', order_id=order.id) }}").then(r => r.json()).then(function(d){
+    if (d.status !== "{{ order.status }}" || d.payment_status !== "{{ order.payment_status }}") { location.reload(); }
+    else { var b = document.getElementById("statusBadge"); b.classList.add("opacity-50"); setTimeout(function(){ b.classList.remove("opacity-50"); }, 400); }
+  });
+}
+{% if order.status not in ('Delivered','Cancelled') %}setInterval(refreshStatus, 20000);{% endif %}
+</script>
+{% endblock %}

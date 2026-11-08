@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% from "_macros.html" import stat, plot, scope_bar, empty with context %}
+{% block title %}Analytics{% endblock %}
+{% block head %}<script src="{{ url_for('plotly_js') }}"></script>{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>Order analytics</h1><div class="sub">Visual trends from your order data</div></div>
+  <a class="btn btn-outline-brand no-print" href="{{ url_for('insights.reports') }}"><i class="fa-solid fa-file-lines me-1"></i>Reports</a></div>
+{{ scope_bar(allowed, selected, start, end) }}
+<div class="row g-3 mb-4">
+  <div class="col-6 col-lg-3">{{ stat('fa-receipt','orange',summary.orders,'Orders') }}</div>
+  <div class="col-6 col-lg-3">{{ stat('fa-coins','green',summary.revenue|money,'Revenue') }}</div>
+  <div class="col-6 col-lg-3">{{ stat('fa-clock','blue',peak_hour,'Peak order hour') }}</div>
+  <div class="col-6 col-lg-3">{{ stat('fa-fire','pink',top_category,'Most popular category') }}</div>
+</div>
+<div class="row g-4">
+  <div class="col-lg-6"><div class="card"><div class="card-body">{{ plot('c1', figs.top_items) }}</div></div></div>
+  <div class="col-lg-6"><div class="card"><div class="card-body">{{ plot('c2', figs.peak) }}</div></div></div>
+  <div class="col-lg-6"><div class="card"><div class="card-body">{{ plot('c3', figs.categories) }}</div></div></div>
+  <div class="col-lg-6"><div class="card"><div class="card-body">{{ plot('c4', figs.weekday) }}</div></div></div>
+  <div class="col-lg-6"><div class="card"><div class="card-body">{{ plot('c5', figs.daily) }}</div></div></div>
+  <div class="col-lg-6"><div class="card"><div class="card-body">{{ plot('c6', figs.monthly) }}</div></div></div>
+  <div class="col-12"><div class="card"><div class="card-header"><i class="fa-solid fa-arrow-trend-up me-2 text-success"></i>Trending items (last 7 days vs previous 7)</div>
+    <div class="card-body p-0">{% if trending|length %}<table class="table table-fos mb-0"><thead><tr><th>Item</th><th>Last 7 days</th><th>Previous 7 days</th><th>Change</th></tr></thead><tbody>
+    {% for t in trending.to_dict('records') %}<tr><td>{{ t.item }}</td><td>{{ t.recent|int }}</td><td>{{ t.previous|int }}</td><td>
+      {% if t.change_pct != t.change_pct %}<span class="badge bg-info text-dark">New</span>
+      {% elif t.change_pct > 0 %}<span class="text-success fw-bold">▲ {{ t.change_pct|int }}%</span>
+      {% elif t.change_pct < 0 %}<span class="text-danger fw-bold">▼ {{ (-t.change_pct)|int }}%</span>{% else %}<span class="text-muted">—</span>{% endif %}</td></tr>{% endfor %}</tbody></table>
+    {% else %}{{ empty('fa-chart-line','Not enough recent data') }}{% endif %}</div></div></div>
+</div>
+{% endblock %}

@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf, thumb with context %}
+{% block title %}Edit Item{% endblock %}
+{% block content %}
+<div class="page-head"><div><a href="{{ url_for('owner.menu') }}" class="small"><i class="fa-solid fa-arrow-left me-1"></i>Back to menu</a><h1 class="mt-1">Edit item</h1></div></div>
+<div class="card"><div class="card-body">
+<form method="post" enctype="multipart/form-data">{{ csrf() }}
+  <div class="row g-3">
+    <div class="col-md-4"><label class="form-label">Restaurant *</label><select name="restaurant" class="form-select" required>
+      {% for r in restaurants %}<option value="{{ r.id }}" {{ 'selected' if r.id==item.restaurant_id }}>{{ r.name }}</option>{% endfor %}</select></div>
+    <div class="col-md-4"><label class="form-label">Item name *</label><input type="text" name="name" class="form-control" value="{{ item.name }}" required></div>
+    <div class="col-md-2"><label class="form-label">Price (Rs.) *</label><input type="number" step="0.01" min="0.01" name="price" class="form-control" value="{{ item.price }}" required></div>
+    <div class="col-md-2"><label class="form-label">Stock qty *</label><input type="number" min="0" name="stock_qty" class="form-control" value="{{ item.stock_qty }}" required></div>
+    <div class="col-md-4"><label class="form-label">Category</label><select name="category_id" class="form-select"><option value="">— none —</option>
+      {% for c in categories %}<option value="{{ c.id }}" {{ 'selected' if c.id==item.category_id }}>{{ c.name }}</option>{% endfor %}</select></div>
+    <div class="col-md-4"><label class="form-label">...or new category</label><input type="text" name="new_category" class="form-control"></div>
+    <div class="col-md-4"><label class="form-label">Replace image</label><input type="file" name="image" accept="image/*" class="form-control"></div>
+    <div class="col-md-9"><label class="form-label">Description</label><input type="text" name="description" class="form-control" value="{{ item.description or '' }}" maxlength="300"></div>
+    <div class="col-md-3 d-flex align-items-end"><div class="form-check"><input type="checkbox" name="is_available" class="form-check-input" id="avail" {{ 'checked' if item.is_available }}><label for="avail" class="form-check-label">Available</label></div></div>
+    <div class="col-12">Current image: {{ thumb(item, 64) }}</div>
+  </div>
+  <button class="btn btn-brand mt-3"><i class="fa-solid fa-floppy-disk me-2"></i>Save changes</button>
+  <a href="{{ url_for('owner.menu') }}" class="btn btn-outline-secondary mt-3">Cancel</a>
+</form></div></div>
+{% endblock %}

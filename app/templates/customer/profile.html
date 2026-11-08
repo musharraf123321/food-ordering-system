@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf with context %}
+{% block title %}My Profile{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>My profile</h1><div class="sub">{{ current_user.role|capitalize }} account{% if current_user.is_customer %} · {{ current_user.loyalty_points }} loyalty points{% endif %}</div></div></div>
+<div class="row g-4">
+  <div class="col-lg-7"><div class="card"><div class="card-header">Personal details</div><div class="card-body">
+    <form method="post">{{ csrf() }}
+      <div class="mb-3"><label class="form-label">Full name</label><input type="text" name="name" class="form-control" value="{{ current_user.name }}" required></div>
+      <div class="mb-3"><label class="form-label">Email</label><input type="email" name="email" class="form-control" value="{{ current_user.email }}" required></div>
+      <div class="mb-3"><label class="form-label">Phone</label><input type="text" name="phone" class="form-control" value="{{ current_user.phone or '' }}"></div>
+      <div class="mb-3"><label class="form-label">Delivery address</label><input type="text" name="address" class="form-control" value="{{ current_user.address or '' }}"></div>
+      <button class="btn btn-brand"><i class="fa-solid fa-floppy-disk me-2"></i>Save changes</button>
+    </form></div></div></div>
+  <div class="col-lg-5"><div class="card"><div class="card-header">Change password</div><div class="card-body">
+    <form method="post" action="{{ url_for('customer.change_password') }}">{{ csrf() }}
+      <div class="mb-3"><label class="form-label">Current password</label><input type="password" name="current_password" class="form-control" required></div>
+      <div class="mb-3"><label class="form-label">New password</label><input type="password" name="new_password" class="form-control" minlength="6" required></div>
+      <div class="mb-3"><label class="form-label">Confirm new password</label><input type="password" name="confirm_password" class="form-control" minlength="6" required></div>
+      <button class="btn btn-outline-brand"><i class="fa-solid fa-key me-2"></i>Update password</button>
+    </form></div></div></div>
+</div>
+{% endblock %}

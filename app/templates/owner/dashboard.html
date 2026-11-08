@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% from "_macros.html" import badge, stat, empty with context %}
+{% block title %}Owner Dashboard{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>Restaurant dashboard</h1>
+  <div class="sub">{% if restaurants %}{{ restaurants|map(attribute='name')|join(', ') }}{% else %}No restaurant assigned yet{% endif %}</div></div>
+  <div class="d-flex gap-2"><a class="btn btn-brand" href="{{ url_for('owner.menu') }}"><i class="fa-solid fa-plus me-1"></i>Manage menu</a>
+    <a class="btn btn-outline-brand" href="{{ url_for('insights.predictions') }}"><i class="fa-solid fa-brain me-1"></i>Demand forecast</a></div></div>
+
+{% if not restaurants %}
+<div class="alert alert-warning">You have not been assigned a restaurant yet. Please ask the administrator to assign one to your account.</div>
+{% endif %}
+
+<div class="row g-3 mb-4">
+  <div class="col-6 col-lg-3">{{ stat('fa-bag-shopping', 'orange', stats.today_orders, "Today's orders") }}</div>
+  <div class="col-6 col-lg-3">{{ stat('fa-coins', 'green', stats.today_revenue|money, "Today's revenue") }}</div>
+  <div class="col-6 col-lg-3">{{ stat('fa-fire-burner', 'blue', stats.pending, 'Orders in progress') }}</div>
+  <div class="col-6 col-lg-3">{{ stat('fa-book-open', 'purple', stats.menu_items, 'Menu items') }}</div>
+</div>
+
+<div class="row g-4">
+  <div class="col-lg-7"><div class="card h-100"><div class="card-header d-flex justify-content-between"><span>Latest orders</span><a class="small" href="{{ url_for('owner.orders') }}">View all</a></div>
+    <div class="card-body p-0">
+    {% if recent %}<table class="table table-fos mb-0"><thead><tr><th>Order</th><th>Customer</th><th>Total</th><th>Status</th></tr></thead><tbody>
+      {% for o in recent %}<tr><td>#{{ o.id }}</td><td>{{ o.user.name }}</td><td>{{ o.total_amount|money }}</td><td>{{ badge(o.status) }}</td></tr>{% endfor %}</tbody></table>
+    {% else %}{{ empty('fa-bag-shopping', 'No orders yet') }}{% endif %}</div></div></div>
+  <div class="col-lg-5"><div class="card h-100"><div class="card-header"><i class="fa-solid fa-triangle-exclamation text-warning me-2"></i>Stock alerts</div>
+    <ul class="list-group list-group-flush">
+    {% for m in low_stock %}<li class="list-group-item d-flex justify-content-between"><span>{{ m.name }}</span><span>{{ m.stock_qty }} left {{ badge(m.stock_status) }}</span></li>
+    {% else %}<li class="list-group-item text-muted">All items are well stocked.</li>{% endfor %}</ul></div></div>
+</div>
+{% endblock %}

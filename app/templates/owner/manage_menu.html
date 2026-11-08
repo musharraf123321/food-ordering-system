@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf, badge, thumb, empty with context %}
+{% block title %}Manage Menu{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>Manage menu</h1><div class="sub">Add, edit and remove the dishes customers see</div></div></div>
+
+{% if restaurants %}
+<div class="card mb-4"><div class="card-header"><i class="fa-solid fa-plus me-2 text-brand"></i>Add a new item</div><div class="card-body">
+  <form method="post" enctype="multipart/form-data">{{ csrf() }}
+    <div class="row g-3">
+      <div class="col-md-4"><label class="form-label">Restaurant *</label><select name="restaurant" class="form-select" required>
+        {% for r in restaurants %}<option value="{{ r.id }}">{{ r.name }}</option>{% endfor %}</select></div>
+      <div class="col-md-4"><label class="form-label">Item name *</label><input type="text" name="name" class="form-control" required maxlength="150"></div>
+      <div class="col-md-2"><label class="form-label">Price (Rs.) *</label><input type="number" step="0.01" min="0.01" name="price" class="form-control" required></div>
+      <div class="col-md-2"><label class="form-label">Stock qty *</label><input type="number" min="0" name="stock_qty" value="50" class="form-control" required></div>
+      <div class="col-md-4"><label class="form-label">Category</label><select name="category_id" class="form-select"><option value="">— choose —</option>
+        {% for c in categories %}<option value="{{ c.id }}">{{ c.name }}</option>{% endfor %}</select></div>
+      <div class="col-md-4"><label class="form-label">...or new category</label><input type="text" name="new_category" class="form-control" placeholder="e.g. Salads"></div>
+      <div class="col-md-4"><label class="form-label">Image (optional - can be added later)</label><input type="file" name="image" accept="image/*" class="form-control"></div>
+      <div class="col-md-9"><label class="form-label">Description</label><input type="text" name="description" class="form-control" maxlength="300"></div>
+      <div class="col-md-3 d-flex align-items-end"><div class="form-check"><input type="checkbox" name="is_available" class="form-check-input" id="avail" checked><label for="avail" class="form-check-label">Available</label></div></div>
+    </div>
+    <button class="btn btn-brand mt-3"><i class="fa-solid fa-plus me-2"></i>Add item</button>
+  </form></div></div>
+{% endif %}
+
+<div class="card"><div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2"><span>Menu items ({{ items|length }})</span>
+  <form method="get" class="d-flex gap-2"><input type="text" name="search" value="{{ search or '' }}" class="form-control form-control-sm" placeholder="Search..."><button class="btn btn-sm btn-outline-brand">Go</button></form></div>
+  <div class="card-body p-0">
+  {% if items %}
+  <div class="table-responsive"><table class="table table-fos align-middle mb-0">
+    <thead><tr><th></th><th>Item</th><th>Restaurant</th><th>Category</th><th>Price</th><th>Stock</th><th>Status</th><th class="text-end">Actions</th></tr></thead>
+    <tbody>{% for i in items %}
+      <tr><td>{{ thumb(i, 46) }}</td><td class="fw-semibold">{{ i.name }}</td><td>{{ i.restaurant.name }}</td><td>{{ i.category_name }}</td>
+        <td>{{ i.price|money }}</td><td>{{ i.stock_qty }}</td><td>{{ badge(i.stock_status) }}</td>
+        <td class="text-end text-nowrap">
+          <form method="post" action="{{ url_for('owner.toggle_item', item_id=i.id) }}" class="d-inline">{{ csrf() }}
+            <button class="btn btn-sm btn-outline-secondary" title="Toggle availability"><i class="fa-solid fa-{{ 'eye-slash' if i.is_available else 'eye' }}"></i></button></form>
+          <a href="{{ url_for('owner.edit_menu', item_id=i.id) }}" class="btn btn-sm btn-outline-primary"><i class="fa-solid fa-pen"></i></a>
+          <form method="post" action="{{ url_for('owner.delete_menu', item_id=i.id) }}" class="d-inline" data-confirm="Delete '{{ i.name }}'? If it appears in past orders it will be archived instead.">{{ csrf() }}
+            <button class="btn btn-sm btn-outline-danger"><i class="fa-solid fa-trash"></i></button></form></td></tr>
+    {% endfor %}</tbody></table></div>
+  {% else %}{{ empty('fa-bowl-food', 'No menu items yet', 'Use the form above to add your first dish.') }}{% endif %}
+</div></div>
+{% endblock %}
